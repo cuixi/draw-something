@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+	<title>guess</title>
+</head>
+<body>
+
+	<div class="container">
+		<img class="painter" src="" alt="">
+	</div>
+
+
+	<script>
+
+		window.onload = function(){
+			var websocket = createSocket();
+			connectWebSocket(websocket);
+		}
+
+		/**
+		 * 创建websocket
+		 * @return Object websocket对象
+		 */
+		function createSocket(){
+			var domain = '192.168.1.182:3001';
+			var server = 'ws://' + domain;
+			var websocket = new WebSocket(server);
+			return websocket;
+		}
+
+
+		/**
+		 * 监听websocket
+		 * websocket打开				==> open
+		 * websocket接收消息		==> message
+		 * websocket关闭				==> close
+		 * @param  Object websocket websocket对象
+		 */
+		function connectWebSocket(websocket){
+			websocket.addEventListener('open', function(event){
+				var data = {
+					type: 1,
+					status: 1
+				}
+				// 发送消息
+				websocket.send(JSON.stringify(data));
+				console.log('websocket is open');
+			});
+
+			websocket.addEventListener('message', function(event){
+				var painter = document.querySelector('.painter');
+				var data = JSON.parse(event.data);
+				if(data.type == 2){
+					setSquareStyle(data.cid);
+				}
+				if(data.type == 3){
+					painter.src = data.img;
+				}
+				// console.log('get message: ' + event.data);
+			});
+
+			websocket.addEventListener('close', function(event){
+				console.log(event);
+				console.log('websocket is close');
+			});
+		}
+
+
+	</script>
+
+	<style>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		ul, li {
+			list-style: none;
+		}
+		.container {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-top: 100px;
+		}
+		.painter {
+			border: 1px solid #eee;
+		}
+
+	</style>
+
+</body>
+</html>

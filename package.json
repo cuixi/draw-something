@@ -1,0 +1,33 @@
+{
+  "name": "draw-something",
+  "version": "1.0.0",
+  "description": "a game of draw something",
+  "main": "app.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cuixi/draw-something.git"
+  },
+  "keywords": [
+    "node",
+    "websocket",
+    "canvas"
+  ],
+  "author": "Tracy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cuixi/draw-something/issues"
+  },
+  "homepage": "https://github.com/cuixi/draw-something#readme",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "express-handlebars": "^3.0.0",
+    "ws": "^3.2.0"
+  }
+}

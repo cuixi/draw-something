@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+	<title>painter</title>
+</head>
+<body>
+	
+	<div class="container">
+		<!-- 画笔参数 -->
+		<div class="params">
+			<!-- 选择画笔大小 -->
+			<ul class="line_width">
+				<li data-index="0"></li>
+				<li data-index="1"></li>
+				<li data-index="2"></li>
+			</ul>
+			
+			<!-- 选择画笔颜色 -->
+			<ul class="line_color">
+				<li data-index="0"></li>
+				<li data-index="1"></li>
+				<li data-index="2"></li>
+				<li data-index="3"></li>
+			</ul>
+		</div>
+		<!-- 画板 -->
+		<div class="cmodule">
+			<canvas id="canvas" width="300" height="300"></canvas>
+		</div>
+		<!-- 工具选择 -->
+		<div class="tool">
+			<span class="clear">清除画布</span>
+			<span class="eraser">橡皮擦</span>
+		</div>
+	</div>
+
+
+	<script>
+
+		window.onload = function(){
+			var websocket = createSocket();
+			var canvas = document.querySelector('#canvas');
+			var ctx = canvas.getContext('2d');
+
+			connectWebSocket(websocket);
+
+			painter(canvas, ctx);
+			modifyParams(ctx);
+			editPainter(ctx);
+			getPainter(canvas, websocket)
+		}
+
+		/**
+		 * 获取并传输绘制的图像
+		 * 设置消息类型为3
+		 * 每隔60毫秒广播图像信息
+		 * @param  Object canvas    画布对象
+		 * @param  Object websocket websocket对象
+		 */
+		function getPainter(canvas, websocket){
+			setInterval(function(){
+				var dataUrl = canvas.toDataURL();
+				var sendData = {
+					type: 3,
+					img: dataUrl
+				};
+				websocket.send(JSON.stringify(sendData));
+			}, 60);
+		}
+
+
+		/**
+		 * canvas绘制
+		 * 画布绑定触摸事件，touchstart、touchmove、touchend
+		 * @param  Object canvas 画布对象
+		 * @param  Object ctx    canvas绘图环境
+		 */
+		function painter(canvas, ctx){
+			var isPaint = false;
+			var offsetLeft = canvas.offsetLeft;
+			var offsetTop = canvas.offsetTop;
+
+			canvas.addEventListener('touchstart', function(e){
+				var x = e.touches[0].clientX - offsetLeft;
+				var y = e.touches[0].clientY - offsetTop;
+				
+				isPaint = true;
+				ctx.beginPath();
+				ctx.moveTo(x, y);
+			});
+
+			canvas.addEventListener('touchmove', function(e){
+				var x = e.touches[0].clientX - offsetLeft;
+				var y = e.touches[0].clientY - offsetTop;
+
+				if(isPaint){
+					ctx.lineTo(x, y);
+					ctx.stroke();
+				}
+			});
+
+			canvas.addEventListener('touchend', function(e){
+				isPaint = false;
+			});
+		}
+
+
+		/**
+		 * 修改画笔大小
+		 * 修改画笔颜色
+		 * @param  Object ctx canvas绘图环境
+		 */
+		function modifyParams(ctx){
+			var colors = ['#f00', '#0f0', '#00f', '#000'];
+			var widths = [1, 5, 10];
+			ctx.strokeStyle = colors[3];
+			/**
+			 * 修改画笔大小
+			 */
+			var lineWidth = document.querySelector('.line_width');
+			lineWidth.addEventListener('click', function(e){
+				var index = e.target.getAttribute('data-index');
+				ctx.lineWidth = widths[index];
+			});
+
+			/**
+			 * 修改画笔颜色
+			 */
+			var lineColor = document.querySelector('.line_color');
+			lineColor.addEventListener('click', function(e){
+				var index = e.target.getAttribute('data-index');
+				ctx.strokeStyle = colors[index];
+			});
+		}
+
+		/**
+		 * 选用绘制工具，橡皮擦、重新绘制
+		 * @param  Object ctx canvas绘图环境
+		 */
+		function editPainter(ctx){
+			var clear = document.querySelector('.clear');
+			var eraser = document.querySelector('.eraser');
+			
+			// 橡皮擦
+			eraser.addEventListener('click', function(){
+				var selected = eraser.classList.contains('active');
+				if(selected){
+					ctx.globalCompositeOperation = 'source-over';
+				}else{
+					ctx.globalCompositeOperation = 'destination-out';
+				}
+				eraser.classList.toggle('active');
+			});
+
+			// 重新绘制
+			clear.addEventListener('click', function(){
+				ctx.clearRect(0, 0, 300, 300);
+			});
+		}
+		
+
+		/**
+		 * 创建websocket
+		 * @return Object 返回websocket对象
+		 */
+		function createSocket(){
+			var domain = '192.168.1.182:3001';
+			var server = 'ws://' + domain;
+			var websocket = new WebSocket(server);
+			return websocket;
+		}
+		
+		/**
+		 * 监听websocket
+		 * websocket打开				==> open
+		 * websocket接收消息		==> message
+		 * websocket关闭				==> close
+		 * @param  Object websocket websocket对象
+		 */
+		function connectWebSocket(websocket){
+			websocket.addEventListener('open', function(event){
+				console.log('websocket is open');
+			});
+
+			websocket.addEventListener('message', function(event){
+				var data = JSON.parse(event.data);
+				if(data.type == 2){
+					setSquareStyle(data.cid);
+				}
+				// console.log('get message: ' + event.data);
+			});
+
+			websocket.addEventListener('close', function(event){
+				console.log('websocket is close');
+			});
+		}
+
+
+	</script>
+
+	
+	<style>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		ul, li {
+			list-style: none;
+		}
+		.cmodule {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-top: 20px;
+		}
+		#canvas {
+			width: 300px;
+			height: 300px;
+			border: 1px solid #eee;
+		}
+		.params {
+			display: flex;
+			justify-content: space-between;
+			width: 300px;
+			margin: 50px auto 0 auto;
+		}
+		.tool {
+			display: flex;
+			justify-content: space-between;
+			width: 300px;
+			margin: 30px auto 0 auto;
+		}
+		.eraser {
+			color: #333;
+			font-size: 12px;
+			height: 30px;
+			line-height: 30px;
+			padding: 0 10px;
+			border: 1px solid #ddd;
+			border-radius: 3px;
+		}
+		.eraser.active {
+			color: #fff;
+			border-color: #000;
+			background: #000;
+		}
+		.clear {
+			color: #333;
+			font-size: 12px;
+			height: 30px;
+			line-height: 30px;
+			padding: 0 10px;
+			border: 1px solid #ddd;
+			border-radius: 3px;
+		}
+		.line_width {
+			display: flex;
+		}
+		.line_width li {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 20px;
+			height: 20px;
+			margin-right: 10px;
+			border: 1px solid #eee;
+		}
+		.line_width li:nth-child(1):before {
+			display: block;
+			content: '';
+			width: 10px;
+			height: 10px;
+			border-radius: 50%;
+			background: #333;
+		}
+		.line_width li:nth-child(2):before {
+			display: block;
+			content: '';
+			width: 15px;
+			height: 15px;
+			border-radius: 50%;
+			background: #333;
+		}
+		.line_width li:nth-child(3):before {
+			display: block;
+			content: '';
+			width: 20px;
+			height: 20px;
+			border-radius: 50%;
+			background: #333;
+		}
+
+		.line_color {
+			display: flex;
+		}
+		.line_color li {
+			width: 20px;
+			height: 20px;
+			margin-left: 10px;
+		}
+		.line_color li:nth-child(1){
+			margin: 0;
+			background: #f00;
+		}
+		.line_color li:nth-child(2){
+			background: #0f0;
+		}
+		.line_color li:nth-child(3){
+			background: #00f;
+		}
+		.line_color li:nth-child(4){
+			background: #000;
+		}
+	</style>
+
+</body>
+</html>
