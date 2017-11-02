@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 	<title>guess</title>
+	<script src="/scripts/config.js"></script>
 </head>
 <body>
 
@@ -24,7 +25,7 @@
 		 * @return Object websocket对象
 		 */
 		function createSocket(){
-			var domain = '192.168.1.182:3001';
+			var domain = config.domain + ':' + config.port;
 			var server = 'ws://' + domain;
 			var websocket = new WebSocket(server);
 			return websocket;

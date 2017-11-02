@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const http = require('http');
 const path = require('path');
 const hbs = require('express-handlebars');
-const WebSocket = require('ws');
+const websocket = require('socket.io');
 const config = require('./config');
 const app = express();
 
@@ -48,28 +48,52 @@ server.listen(config.port, '0.0.0.0', function(err){
 
 
 // 启动websocket服务
-const wss = new WebSocket.Server({server: server});
+const io = websocket(server);
 
-const wsMap = {};
-const wsRelaMap = {};
+let room = 'game';
+let playerList = [];
+let gameList = [];
 
+io.on('connection', function(socket){
+	let player = '';
+	let game = '';
 
-wss.on('connection', function(ws){
-	const id = ws._ultron.id;
-	wsMap[id] = ws;
-
-	ws.on('message', function(data){
-		console.log('接收消息：' + data);
-		// 向所有客户端广播消息
-		for(var id in wsMap){
-			wsMap[id].send(data);
+	/**
+	 * 用户登陆
+	 */
+	socket.on('login', function(data){
+		if(playerList.length == 0){
+			data['master'] = 1;
+			data['guest'] = 0;
+		}else{
+			data['master'] = 0;
+			data['guest'] = 1;
 		}
+		player = data;
+		playerList.push(data);
+		socket.join(room);
+		socket.emit('login', {player: data});
+		// io.sockets.in(room).emit('login', {playerList: playerList, player: data});
 	});
 
-	ws.on('close', function(){
-		delete wsMap[id];
-		console.log('client is close');
-	})
+	/**
+	 * 监听图片绘制
+	 */
+	socket.on('painter', function(data){
+		io.sockets.in(room).emit('painter', data);
+	});
+
+	/**
+	 * 离开游戏
+	 */
+	socket.on('disconnect', function(){
+		var index = playerList.indexOf(player);
+		playerList.splice(index, 1);
+		console.log(playerList);
+		io.sockets.in(room).emit('logout', {playerList: playerList, player: player})
+	});
+
+
 });
 
 

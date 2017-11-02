@@ -4,84 +4,75 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>你画我猜</title>
-	<style>
-		* {
-			padding: 0;
-			margin: 0;
-		}
-		.create	{
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			color: #333;
-			font-size: 16px;
-			width: 120px;
-			height: 36px;
-			line-height: 36px;
-			text-align: center;
-			transform: translate(-50%, -50%);
-			border: 1px solid #ddd;
-			border-radius: 5px;
-		}
-		.enter {
-			display: none;
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			width: 200px;
-			height: 200px;
-			transform: translate(-50%, -50%);
-		}
-	</style>
+	<link rel="stylesheet" href="/styles/base.css">
+	<link rel="stylesheet" href="/styles/login.css">
 </head>
 <body>
-	<!--  创建房间 -->
-	<div class="create">创建房间</div>
 
-	<!-- 进入游戏二维码 -->
-	<img class="enter" src="" alt="">
+	<div class="login_module">
+		<input type="text" class="username" placeholder="请输入昵称">
+		<span class="login">进入游戏</span>
+	</div>
+
+	<!-- 游戏界面 -->
+	<div class="game_module">
+		<!-- 房间列表 -->
+		<div class="games">
+			<ul class="game_list">
+				<li>
+					<div class="game_info">
+						<p class="game_id">房间号：1231312</p>
+						<p class="num">当前游戏人数：12</p>
+					</div>
+					<span class="enter">进入房间</span>
+				</li>
+			</ul>
+		</div>
+		<!--  创建房间 -->
+		<div class="create">创建房间</div>
+	</div>
+
+	<!-- 游戏界面 -->
+	<div class="painter_interface">
+		<!-- 画笔参数 -->
+		<div class="params">
+			<!-- 选择画笔大小 -->
+			<ul class="line_width">
+				<li data-index="0"></li>
+				<li data-index="1"></li>
+				<li data-index="2"></li>
+			</ul>
+			
+			<!-- 选择画笔颜色 -->
+			<ul class="line_color">
+				<li data-index="0"></li>
+				<li data-index="1"></li>
+				<li data-index="2"></li>
+				<li data-index="3"></li>
+			</ul>
+		</div>
+		<!-- 画板 -->
+		<div class="cmodule">
+			<canvas id="canvas" width="300" height="300"></canvas>
+		</div>
+		<!-- 工具选择 -->
+		<div class="tool">
+			<span class="clear">清除画布</span>
+			<span class="eraser">橡皮擦</span>
+		</div>
+	</div>
+
+	<!-- 显示绘制图片 -->
+	<div class="painter">
+		<img class="photo" src="" alt="">
+	</div>
+
 	
 
-	<script>
-
-		window.onload = function(){
-			var domain = '192.168.1.182:3001';
-			var src = 'http://qr.liantu.com/api.php?text=http://' + domain + '/guess/1';
-			var server = 'ws://' + domain;
-
-			var btn = document.querySelector('.create');
-			var enter = document.querySelector('.enter');
-
-			// 创建房间
-			btn.addEventListener('touchstart', function(){
-				btn.style.display = 'none';
-				enter.style.display = 'block';
-				enter.src = src;
-			});
-
-			// 连接websocket服务
-			var websocket = new WebSocket(server);
-
-			websocket.addEventListener('open', function(event){
-				console.log('websocket is open');
-			});
-
-			websocket.addEventListener('message', function(event){
-				var data = JSON.parse(event.data);
-				console.log(event.data);
-				if(data.type == 1 && data.status == 1){
-					window.location.href = 'http://' + domain + '/painter/1';
-				}
-				console.log('接收socket信息： ' + event.data);
-			});
-
-			websocket.addEventListener('close', function(event){
-				console.log('websocket is close');
-			});
-		}
-
-	</script>
-
-
+	<!-- 脚本 -->
+	<script src="/scripts/config.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="/scripts/login.js"></script>
+	<script src="/scripts/painter.js"></script>
 </body>
 </html>
